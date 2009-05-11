@@ -1,12 +1,31 @@
 $:.unshift(File.dirname(__FILE__) + '/../../lib')
-require 'cucumber/rake/task'
 
-Cucumber::Rake::Task.new(:features) do |t|
-  t.cucumber_opts = "--format pretty"
-end
+if !(defined?(RUBY_ENGINE) && RUBY_ENGINE == "jruby")
+  puts "attempting to run this example with ruby rather than jruby."
+  puts "this is a jruby-specific example."
+  puts 'please use \'jruby -S rake features\''
+else
+  # determine if jruby has a cucumber version installed.  If not, I think
+  # rake tries to find the cucumber on the path, which is usually MRI;
+  # mayhem ensues. (well, an annoying error at least).
+  which_cucumber = `jruby -S gem list cucumber`
+  
+  # is cucumber listed as one of the jruby gems?
+  if which_cucumber.grep(/cucumber/).length > 0
+    # if everything is properly installed, run appropriately
+    require 'cucumber/rake/task'
 
-task :features => :compile
+    Cucumber::Rake::Task.new(:features) do |t|
+      t.cucumber_opts = "--format pretty"
+    end
+    task :features => :compile
 
-task :compile do
-  sh "javac src/cucumber/demo/Hello.java && jar cf src/cucumber_demo.jar -C src cucumber/demo/Hello.class"
+    task :compile do
+      sh "javac src/cucumber/demo/Hello.java && jar cf src/cucumber_demo.jar -C src cucumber/demo/Hello.class"
+    end
+
+  else # no cucumber is listed as one of the jruby gems; don't run example.
+    puts 'no jruby cucumber installed'
+    puts 'please run \'jruby -S gem install cucumber\' to install cucumber for jruby'
+  end
 end
